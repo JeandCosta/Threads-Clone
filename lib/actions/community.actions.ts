@@ -159,6 +159,37 @@ export async function fetchCommunities({
   }
 }
 
+export async function fetchCommunitiesNotMemberOf({
+  userId,
+  pageSize = 20,
+}: {
+  userId: string;
+  pageSize: number;
+}) {
+  try {
+    connectToDB();
+
+    // Find the user by their ID to get a list of communities they are a member of
+    const user = await User.findOne({ id: userId }).populate("communities");
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Fetch all communities and exclude those that the user is a member of
+    const communities = await Community.find({
+      _id: { $nin: user.communities.map((c: any) => c._id) },
+    })
+      .limit(pageSize)
+      .populate("members");
+
+    return communities;
+  } catch (error) {
+    console.error("Error fetching communities:", error);
+    throw error;
+  }
+}
+
 export async function addMemberToCommunity(
   communityId: string,
   memberId: string
