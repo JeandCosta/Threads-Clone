@@ -1,14 +1,15 @@
 import { currentUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import { fetchUser, fetchUsers } from "../../../lib/actions/user.actions";
-import ProfileHeader from "../../../components/shared/ProfileHeader";
 
-import { profileTabs } from "../../../constants";
-import Image from "next/image";
-import ThreadsTab from "../../../components/shared/ThreadsTab";
 import UserCard from "../../../components/cards/UserCard";
+import Searchbar from "../../../components/shared/Searchbar";
 
-async function page() {
+async function page({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | undefined };
+}) {
   const user = await currentUser();
 
   if (!user) return null;
@@ -18,8 +19,8 @@ async function page() {
 
   const result = await fetchUsers({
     userId: user.id,
-    searchString: "",
-    pageNumber: 1,
+    searchString: searchParams.q,
+    pageNumber: searchParams?.page ? +searchParams.page : 1,
     pageSize: 25,
   });
 
@@ -27,7 +28,7 @@ async function page() {
     <section>
       <h1 className="head-text mb-10">Search</h1>
 
-      {/* Searchbar */}
+      <Searchbar routeType="search" />
 
       <div className="mt-14 flex flex-col gap-9">
         {result.users.length === 0 ? (
