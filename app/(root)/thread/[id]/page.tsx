@@ -1,12 +1,15 @@
-import ThreadCard from "../../../../components/cards/ThreadCard";
-import { currentUser } from "@clerk/nextjs";
-import { fetchUser } from "../../../../lib/actions/user.actions";
 import { redirect } from "next/navigation";
-import { fetchThreadById } from "../../../../lib/actions/thread.actions";
-import Comment from "../../../../components/forms/Comment";
-import Thread from "../../../../lib/models/thread.model";
+import { currentUser } from "@clerk/nextjs";
 
-const page = async ({ params }: { params: { id: string } }) => {
+import Comment from "../../../../components/forms/Comment";
+import ThreadCard from "../../../../components/cards/ThreadCard";
+
+import { fetchUser } from "../../../../lib/actions/user.actions";
+import { fetchThreadById } from "../../../../lib/actions/thread.actions";
+
+export const revalidate = 0;
+
+async function page({ params }: { params: { id: string } }) {
   if (!params.id) return null;
 
   const user = await currentUser();
@@ -23,20 +26,22 @@ const page = async ({ params }: { params: { id: string } }) => {
         <ThreadCard
           key={thread._id}
           id={thread._id}
-          currentUserId={user?.id || ""}
+          currentUserId={user.id}
+          currentUserInfoId={userInfo._id}
           parentId={thread.parentId}
           content={thread.text}
           author={thread.author}
           community={thread.community}
           createdAt={thread.createdAt}
           comments={thread.children}
+          likedBy={thread.likedBy}
         />
       </div>
 
       <div className="mt-7">
         <Comment
-          threadId={thread.id}
-          currentUserImg={userInfo.image}
+          threadId={params.id}
+          currentUserImg={user.imageUrl}
           currentUserId={JSON.stringify(userInfo._id)}
         />
       </div>
@@ -46,7 +51,8 @@ const page = async ({ params }: { params: { id: string } }) => {
           <ThreadCard
             key={childItem._id}
             id={childItem._id}
-            currentUserId={childItem?.id || ""}
+            currentUserId={user.id}
+            currentUserInfoId={userInfo._id}
             parentId={childItem.parentId}
             content={childItem.text}
             author={childItem.author}
@@ -54,11 +60,12 @@ const page = async ({ params }: { params: { id: string } }) => {
             createdAt={childItem.createdAt}
             comments={childItem.children}
             isComment
+            likedBy={childItem.likedBy}
           />
         ))}
       </div>
     </section>
   );
-};
+}
 
 export default page;
