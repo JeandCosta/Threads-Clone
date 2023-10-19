@@ -7,6 +7,7 @@ import { connectToDB } from "../mongoose";
 import User from "../models/user.model";
 import Thread from "../models/thread.model";
 import Community from "../models/community.model";
+import mongoose from "mongoose";
 
 export async function fetchPosts(pageNumber = 1, pageSize = 20) {
   connectToDB();
@@ -34,6 +35,12 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
         model: User,
         select: "_id name parentId image", // Select only _id and username fields of the author
       },
+    })
+    .populate({
+      path: "likedBy", // Populate the likedBy field to get the list of users who liked the thread
+      model: User,
+      select: "_id name image", // Select the fields you need for users who liked the thread
+      //TODO: CHANGE THE _id FOR id. MUST CHANGE ON THREADCARD TOO.
     });
 
   // Count the total number of top-level posts (threads) i.e., threads that are not comments.
@@ -49,14 +56,18 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
 }
 
 interface Params {
-  text: string,
-  author: string,
-  communityId: string | null,
-  path: string,
+  text: string;
+  author: string;
+  communityId: string | null;
+  path: string;
 }
 
-export async function createThread({ text, author, communityId, path }: Params
-) {
+export async function createThread({
+  text,
+  author,
+  communityId,
+  path,
+}: Params) {
   try {
     connectToDB();
 
@@ -65,10 +76,13 @@ export async function createThread({ text, author, communityId, path }: Params
       { _id: 1 }
     );
 
+    const likedBy: string[] = []; // Array to store user IDs who liked the thread, initially empty
+
     const createdThread = await Thread.create({
       text,
       author,
       community: communityIdObject, // Assign communityId if provided, or leave it null for personal account
+      likedBy,
     });
 
     // Update User model
@@ -236,5 +250,39 @@ export async function addCommentToThread(
   } catch (err) {
     console.error("Error while adding comment:", err);
     throw new Error("Unable to add comment");
+  }
+}
+
+export async function updateLikedBy(threadId: string, userId: string) {
+  connectToDB();
+
+  try {
+    const thread = await Thread.findById(threadId);
+
+    if (!thread) {
+      console.log("Thread not found");
+      throw new Error("Thread not found");
+    }
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    let updateIsLiked = false;
+
+    if (thread.likedBy.includes(userObjectId)) {
+      // User already liked the thread, remove the like
+      thread.likedBy = thread.likedBy.filter(
+        (id: { equals: (arg0: mongoose.Types.ObjectId) => any }) =>
+          !id.equals(userObjectId)
+      );
+      updateIsLiked = false;
+    } else {
+      // User didn't like the thread, add the like
+      thread.likedBy.push(userObjectId);
+      updateIsLiked = true;
+    }
+    const updateLikeCount = thread.likedBy.length;
+    await thread.save();
+    return { updateIsLiked, updateLikeCount };
+  } catch (error: any) {
+    console.error(`Failed to update likedBy: ${error.message}`);
+    throw new Error("Failed to update likedBy");
   }
 }
