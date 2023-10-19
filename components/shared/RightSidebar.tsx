@@ -1,9 +1,11 @@
 import { currentUser } from "@clerk/nextjs";
+
 import UserCard from "../cards/UserCard";
+
 import { fetchCommunities } from "../../lib/actions/community.actions";
 import { fetchUsers } from "../../lib/actions/user.actions";
 
-const RightSidebar = async () => {
+async function RightSidebar() {
   const user = await currentUser();
   if (!user) return null;
 
@@ -17,23 +19,33 @@ const RightSidebar = async () => {
   return (
     <section className="custom-scrollbar rightsidebar">
       <div className="flex flex-1 flex-col justify-start">
-        <h3 className="text-heading-4-medium text-light-1">
-          Sugested Communities
+        <h3 className="text-heading4-medium text-light-1">
+          Suggested Communities
         </h3>
 
         <div className="mt-7 flex w-[350px] flex-col gap-9">
           {suggestedCommunities.communities.length > 0 ? (
             <>
-              {suggestedCommunities.communities.map((community) => (
-                <UserCard
-                  key={community.id}
-                  id={community.id}
-                  name={community.name}
-                  username={community.username}
-                  imgUrl={community.image}
-                  personType="Community"
-                />
-              ))}
+              {suggestedCommunities.communities.map((community) => {
+                // Check if the current user is in the members array
+                const isCurrentUserMember = community.members.includes(user.id);
+                
+                // Render the UserCard only if the user is not a member of the community
+                if (!isCurrentUserMember) {
+                  return (
+                    <UserCard
+                      key={community.id}
+                      id={community.id}
+                      name={community.name}
+                      username={community.username}
+                      imgUrl={community.image}
+                      personType="Community"
+                    />
+                  );
+                }
+
+                return null; // Don't render UserCard if the user is a member
+              })}
             </>
           ) : (
             <p className="!text-base-regular text-light-3">
@@ -42,9 +54,9 @@ const RightSidebar = async () => {
           )}
         </div>
       </div>
-      <div className="flex flex-1 flex-col justify-start">
-        <h3 className="text-heading-4-medium text-light-1">Sugested Users</h3>
 
+      <div className="flex flex-1 flex-col justify-start">
+        <h3 className="text-heading4-medium text-light-1">Similar Minds</h3>
         <div className="mt-7 flex w-[350px] flex-col gap-10">
           {similarMinds.users.length > 0 ? (
             <>
@@ -66,6 +78,6 @@ const RightSidebar = async () => {
       </div>
     </section>
   );
-};
+}
 
 export default RightSidebar;

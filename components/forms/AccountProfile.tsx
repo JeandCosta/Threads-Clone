@@ -79,7 +79,7 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
 
     if (hasImageChanged) {
       const imgRes = await startUpload(files);
-      /* pull request this deprecated syntax */
+
       if (imgRes && imgRes[0].url) {
         values.profile_photo = imgRes[0].url;
       }
@@ -205,7 +205,7 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
             )}
           />
           <Button className="bg-primary-500" type="submit">
-            Submit
+            {btnTitle}
           </Button>
         </form>
       </Form>

@@ -19,18 +19,6 @@ import { ThreadValidation } from "../../lib/validations/thread";
 import { createThread } from "../../lib/actions/thread.actions";
 import { useOrganization } from "@clerk/nextjs";
 
-interface Props {
-  user: {
-    id: string;
-    objectId: string;
-    username: string;
-    bio: string;
-    name: string;
-    image: string;
-  };
-  btnTitle: string;
-}
-
 const PostThread = ({ userId }: { userId: string }) => {
   const router = useRouter();
   const pathname = usePathname();
